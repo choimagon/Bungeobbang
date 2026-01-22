@@ -199,9 +199,18 @@
       z-index: 2;
 
       text-shadow: 0 2px 6px rgba(0,0,0,.55);
+
+      /* ✅ 기본: 번호 숨김 */
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.96);
+      transition: opacity 160ms ease, transform 160ms ease;
     }
 
-
+    /* ✅ 회전 후(맞추기 단계)부터 번호 보이기 */
+    .show-badges .badge{
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
 
     /* ✅ 중앙 로고 */
     .center{
@@ -370,7 +379,6 @@
       .life{ font-size:18px; }
       .overlay-title{ font-size:26px; }
     }
-
   </style>
 </head>
 <body>
@@ -464,9 +472,9 @@
       for (let i = 0; i < N; i++) {
         const angle = (360 / N) * i;
 
-        const wrap = document.createElement('div');
-        wrap.className = 'dot-wrap';
-        wrap.style.transform = `rotate(${angle}deg) translate(${radius}px)`;
+        const wrapEl = document.createElement('div');
+        wrapEl.className = 'dot-wrap';
+        wrapEl.style.transform = `rotate(${angle}deg) translate(${radius}px)`;
 
         const dot = document.createElement('div');
         dot.className = 'dot';
@@ -486,9 +494,12 @@
         dot.appendChild(img);
         dot.appendChild(badge);
 
-        wrap.appendChild(dot);
-        orbit.appendChild(wrap);
+        wrapEl.appendChild(dot);
+        orbit.appendChild(wrapEl);
       }
+
+      // 현재 phase에 맞게 번호 표시 동기화
+      updateBadgesVisibility();
     }
 
     function syncAllDots() {
@@ -521,6 +532,12 @@
 
     function hideOverlay() {
       overlay.classList.remove('show');
+    }
+
+    // ✅ phase에 따라 번호 배지 숨김/표시
+    function updateBadgesVisibility() {
+      const show = (phase === "CLOSED_SELECT" || phase === "END_SUCCESS" || phase === "END_FAIL");
+      wrap.classList.toggle("show-badges", show);
     }
 
     function fireConfettiAtDot(index, durationMs = 2000) {
@@ -602,45 +619,53 @@
 
       confetti.classList.remove('show');
       confetti.innerHTML = '';
+
+      // ✅ 초기에는 번호 숨김
+      updateBadgesVisibility();
     }
 
     function startSpin() {
-        if (phase !== "SETUP") return;
-        if (selectedIndex === null) return;
+      if (phase !== "SETUP") return;
+      if (selectedIndex === null) return;
 
-        // 1) 먼저 '닫힘' 상태로 확실히 변경
-        isClosed = true;
-        syncAllDots();
+      // 1) 먼저 '닫힘' 상태로 확실히 변경
+      isClosed = true;
+      syncAllDots();
 
-        // 2) 1초 동안 완전히 잠그기 (클릭/선택 방지)
-        phase = "SPINNING";
-        setSpinEnabled(false);
+      // 2) 1초 동안 완전히 잠그기 (클릭/선택 방지)
+      phase = "SPINNING";
+      setSpinEnabled(false);
+      // ✅ 회전 전/중에는 번호 숨김 유지
+      updateBadgesVisibility();
 
-        // 3) 닫힌 상태로 1초 보여준 뒤 회전 시작
+      // 3) 닫힌 상태로 1초 보여준 뒤 회전 시작
+      window.setTimeout(() => {
+        // 회전 시간: 2~5초
+        const ms = Math.floor(2000 + Math.random() * 2001);
+
+        // ✅ 느리게(0.3~0.9바퀴 정도)
+        const deltaDeg = 190 + Math.random() * 210;
+        baseRotationDeg += deltaDeg;
+
+        disk.classList.add('spinning');
+        disk.style.setProperty('--spin-ms', `${ms}ms`);
+        void disk.offsetWidth;
+        disk.style.transform = `rotate(${baseRotationDeg}deg)`;
+
         window.setTimeout(() => {
-            // 회전 시간: 2~5초
-            const ms = Math.floor(2000 + Math.random() * 2001);
+          disk.classList.remove('spinning');
+          setSpinEnabled(false);
+          phase = "CLOSED_SELECT"; // 회전 끝나면 선택(맞추기) 단계
 
-            // ✅ 느리게(0.3~0.9바퀴 정도)
-            const deltaDeg = 190 + Math.random() * 210;
-            baseRotationDeg += deltaDeg;
-
-            disk.classList.add('spinning');
-            disk.style.setProperty('--spin-ms', `${ms}ms`);
-            void disk.offsetWidth;
-            disk.style.transform = `rotate(${baseRotationDeg}deg)`;
-
-            window.setTimeout(() => {
-            disk.classList.remove('spinning');
-            setSpinEnabled(false);
-            phase = "CLOSED_SELECT"; // 회전 끝나면 선택(맞추기) 단계
-            }, ms);
-        }, 1000);
+          // ✅ 회전 후에 번호 보이게
+          updateBadgesVisibility();
+        }, ms);
+      }, 1000);
     }
-
 
     function endSuccess() {
       phase = "END_SUCCESS";
+      updateBadgesVisibility(); // ✅ 엔딩에서도 번호 유지
 
       isClosed = false;
       syncAllDots();
@@ -655,6 +680,7 @@
 
     function endFail() {
       phase = "END_FAIL";
+      updateBadgesVisibility(); // ✅ 엔딩에서도 번호 유지
       showOverlay("실패", "목숨이 모두 소진되었습니다.");
       showResetOnly(true);
     }
@@ -700,17 +726,18 @@
 
       setSpinEnabled(true);
       phase = "SETUP";
+      updateBadgesVisibility(); // ✅ 선택 단계에서는 번호 숨김 유지
     });
 
     window.addEventListener('resize', () => {
       renderDots();
       syncAllDots();
     });
-    window.addEventListener('pageshow', (e) => {
-    // e.persisted === true 이면 BFCache(뒤로가기 캐시)로 복원된 경우
-        resetGame();
-    });
 
+    window.addEventListener('pageshow', (e) => {
+      // e.persisted === true 이면 BFCache(뒤로가기 캐시)로 복원된 경우
+      resetGame();
+    });
 
     resetGame();
   </script>
