@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>find_bun</title>
+  <title>붕어빵 찾아봐라</title>
   <style>
     :root{
       --disk-size: 420px;
@@ -31,6 +31,11 @@
 
       /* 부드러운 그림자(아이보리에 맞게 너무 진하지 않게) */
       --soft-shadow: 0 14px 34px rgba(43,44,43,.10);
+
+      /* ✅ 번호 배지 */
+      --badge-bg: rgba(245,245,242,.92);
+      --badge-bd: rgba(43,44,43,.20);
+      --badge-ink: rgba(43,44,43,.95);
     }
 
     body{
@@ -61,7 +66,6 @@
       justify-content:center;
     }
 
-    /* ✅ 목숨 패널: 무광 차콜 톤과 어울리는 웜-아이보리 위의 차콜 글래스 느낌 */
     .lives{
       display:flex;
       align-items:center;
@@ -142,6 +146,9 @@
       cursor:pointer;
       user-select:none;
       pointer-events:auto;
+
+      /* ✅ 배지 포지셔닝을 위해 */
+      position: relative;
     }
 
     .dot:active{
@@ -159,7 +166,45 @@
       pointer-events:none;
     }
 
-    /* ✅ 중앙 로고: 아이보리 + 차콜 조합 */
+    /* ✅ 번호 배지 */
+    .badge{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform: translate(-50%, -50%);
+
+    width: 36px;
+    height: 36px;
+    border-radius: 999px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    /* ✅ 요청: 배경 투명 + 글자 흰색 */
+    background: transparent;
+    color: #ffffff;
+
+    /* 필요 없으면 지워도 됨 */
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+
+    font-weight: 1000;
+    font-size: 20px;
+    line-height: 1;
+
+    pointer-events:none;
+    user-select:none;
+
+    z-index: 2;
+
+    /* (선택) 검은 이미지 위에서 더 선명하게 */
+    text-shadow: 0 2px 6px rgba(0,0,0,.55);
+    }
+
+
+    /* ✅ 중앙 로고 */
     .center{
       position:absolute;
       width: var(--center-size);
@@ -198,7 +243,6 @@
       margin-top: 6px;
     }
 
-    /* ✅ 버튼: 무광 차콜 톤(아이보리에서 고급스럽게) */
     button{
       appearance:none;
       border:none;
@@ -227,7 +271,6 @@
       box-shadow: inset 0 0 0 1px rgba(43,44,43,.10);
     }
 
-    /* 성공/실패 시: 배경 잠금, 오버레이는 선명 */
     .lock-ui .stage,
     .lock-ui .controls button:not(#resetBtn){
       opacity:.35;
@@ -240,7 +283,6 @@
       pointer-events:auto;
     }
 
-    /* ✅ 리셋 버튼은 살짝 더 진하게 */
     #resetBtn{
       display:none;
       background: var(--btn-reset-bg);
@@ -250,7 +292,6 @@
     }
     #resetBtn:hover{ background: var(--btn-reset-hover); }
 
-    /* 오버레이 */
     .overlay{
       position:absolute;
       inset:0;
@@ -265,8 +306,6 @@
       text-align:center;
       padding:18px 20px;
       border-radius:16px;
-
-      /* ✅ 아이보리 위에서 “무광 블랙” 오버레이 */
       background: rgba(43,44,43,.86);
       box-shadow: 0 18px 50px rgba(43,44,43,.25), inset 0 0 0 1px rgba(255,255,255,.10);
       backdrop-filter: blur(8px);
@@ -291,7 +330,6 @@
       font-weight:900;
     }
 
-    /* 폭죽 레이어 */
     .confetti{
       position:absolute;
       inset:0;
@@ -327,6 +365,15 @@
       }
       .life{ font-size:18px; }
       .overlay-title{ font-size:26px; }
+
+      .badge{
+        top:6px;
+        left:6px;
+        min-width: 22px;
+        height: 22px;
+        padding: 0 7px;
+        font-size: 12px;
+      }
     }
   </style>
 </head>
@@ -435,7 +482,14 @@
         if (isClosed) img.src = IMG_ON;
         else img.src = (selectedIndex === i) ? IMG_SELECT : IMG_NONE;
 
+        // ✅ 번호 배지(1~9) 추가
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = String(i + 1);
+
         dot.appendChild(img);
+        dot.appendChild(badge);
+
         wrap.appendChild(dot);
         orbit.appendChild(wrap);
       }
@@ -446,6 +500,7 @@
         if (isClosed) setDotImage(i, IMG_ON);
         else setDotImage(i, (selectedIndex === i) ? IMG_SELECT : IMG_NONE);
       }
+      // 번호는 DOM에 고정이라 따로 동기화 필요 없음
     }
 
     function setSpinEnabled(enabled) {
@@ -567,7 +622,7 @@
       const ms = Math.floor(2000 + Math.random() * 2001);
 
       // ✅ 느리게(0.3~0.9바퀴 정도)
-      const deltaDeg = 140 + Math.random() * 210; // 110~320deg
+      const deltaDeg = 140 + Math.random() * 210;
 
       baseRotationDeg += deltaDeg;
 
@@ -650,6 +705,11 @@
       renderDots();
       syncAllDots();
     });
+    window.addEventListener('pageshow', (e) => {
+    // e.persisted === true 이면 BFCache(뒤로가기 캐시)로 복원된 경우
+        resetGame();
+    });
+
 
     resetGame();
   </script>
