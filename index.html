@@ -611,34 +611,39 @@
     }
 
     function startSpin() {
-      if (phase !== "SETUP") return;
-      if (selectedIndex === null) return;
+        if (phase !== "SETUP") return;
+        if (selectedIndex === null) return;
 
-      isClosed = true;
-      syncAllDots();
+        // 1) 먼저 '닫힘' 상태로 확실히 변경
+        isClosed = true;
+        syncAllDots();
 
-      phase = "SPINNING";
-      setSpinEnabled(false);
-
-      // 회전 시간: 2~5초
-      const ms = Math.floor(2000 + Math.random() * 2001);
-
-      // ✅ 느리게(0.3~0.9바퀴 정도)
-      const deltaDeg = 190 + Math.random() * 210;
-
-      baseRotationDeg += deltaDeg;
-
-      disk.classList.add('spinning');
-      disk.style.setProperty('--spin-ms', `${ms}ms`);
-      void disk.offsetWidth;
-      disk.style.transform = `rotate(${baseRotationDeg}deg)`;
-
-      window.setTimeout(() => {
-        disk.classList.remove('spinning');
+        // 2) 1초 동안 완전히 잠그기 (클릭/선택 방지)
+        phase = "SPINNING";
         setSpinEnabled(false);
-        phase = "CLOSED_SELECT";
-      }, ms);
+
+        // 3) 닫힌 상태로 1초 보여준 뒤 회전 시작
+        window.setTimeout(() => {
+            // 회전 시간: 2~5초
+            const ms = Math.floor(2000 + Math.random() * 2001);
+
+            // ✅ 느리게(0.3~0.9바퀴 정도)
+            const deltaDeg = 190 + Math.random() * 210;
+            baseRotationDeg += deltaDeg;
+
+            disk.classList.add('spinning');
+            disk.style.setProperty('--spin-ms', `${ms}ms`);
+            void disk.offsetWidth;
+            disk.style.transform = `rotate(${baseRotationDeg}deg)`;
+
+            window.setTimeout(() => {
+            disk.classList.remove('spinning');
+            setSpinEnabled(false);
+            phase = "CLOSED_SELECT"; // 회전 끝나면 선택(맞추기) 단계
+            }, ms);
+        }, 1000);
     }
+
 
     function endSuccess() {
       phase = "END_SUCCESS";
