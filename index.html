@@ -38,6 +38,8 @@
       --badge-bg: rgba(245,245,242,.92);
       --badge-bd: rgba(43,44,43,.20);
       --badge-ink: rgba(43,44,43,.95);
+      --badge-size: 36px;
+      --badge-font: 20px;
     }
 
     body{
@@ -170,40 +172,35 @@
 
     /* ✅ 번호 배지 */
     .badge{
-    position:absolute;
-    top:50%;
-    left:50%;
-    transform: translate(-50%, -50%);
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform: translate(-50%, -50%);
 
-    width: 36px;
-    height: 36px;
-    border-radius: 999px;
+      width: var(--badge-size);
+      height: var(--badge-size);
+      border-radius: 999px;
 
-    display:flex;
-    align-items:center;
-    justify-content:center;
+      display:flex;
+      align-items:center;
+      justify-content:center;
 
-    /* ✅ 요청: 배경 투명 + 글자 흰색 */
-    background: transparent;
-    color: #ffffff;
+      background: transparent;
+      color: #ffffff;
+      border: none;
+      box-shadow: none;
 
-    /* 필요 없으면 지워도 됨 */
-    border: none;
-    box-shadow: none;
-    backdrop-filter: none;
+      font-weight: 1000;
+      font-size: var(--badge-font);
+      line-height: 1;
 
-    font-weight: 1000;
-    font-size: 20px;
-    line-height: 1;
+      pointer-events:none;
+      user-select:none;
+      z-index: 2;
 
-    pointer-events:none;
-    user-select:none;
-
-    z-index: 2;
-
-    /* (선택) 검은 이미지 위에서 더 선명하게 */
-    text-shadow: 0 2px 6px rgba(0,0,0,.55);
+      text-shadow: 0 2px 6px rgba(0,0,0,.55);
     }
+
 
 
     /* ✅ 중앙 로고 */
@@ -364,19 +361,16 @@
         --center-size: 96px;
         --dot-size: 52px;
         --orbit-radius: 120px;
+
+        /* ✅ 모바일에서 배지 크기/글씨만 같이 줄이기 */
+        --badge-size: 22px;
+        --badge-font: 12px;
       }
+
       .life{ font-size:18px; }
       .overlay-title{ font-size:26px; }
-
-      .badge{
-        top:6px;
-        left:6px;
-        min-width: 22px;
-        height: 22px;
-        padding: 0 7px;
-        font-size: 12px;
-      }
     }
+
   </style>
 </head>
 <body>
