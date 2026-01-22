@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rotating Disk Game</title>
+  <style>
+    :root{
+      --disk-size: 420px;
+      --center-size: 120px;
+      --dot-size: 120px;
+      --orbit-radius: 140px;
+
+      /* ===== 컬러 테마 (아이보리 + 무광 차콜) ===== */
+      --bg: #F5F5F2;              /* 아이보리 배경 */
+      --ink: #2B2C2B;             /* 무광 차콜(검정 느낌) */
+      --ink-2: #1A1A1A;           /* 더 진한 블랙 */
+      --panel: rgba(43,44,43,.06);/* HUD/패널 배경 */
+      --panel-bd: rgba(43,44,43,.12);
+
+      /* 버튼 */
+      --btn-bg: rgba(43,44,43,.10);
+      --btn-bg-hover: rgba(43,44,43,.14);
+      --btn-bg-active: rgba(43,44,43,.16);
+      --btn-bd: rgba(43,44,43,.18);
+      --btn-text: #2B2C2B;
+
+      /* 리셋 버튼(조금 더 강조) */
+      --btn-reset-bg: rgba(43,44,43,.16);
+      --btn-reset-hover: rgba(43,44,43,.20);
+
+      /* 부드러운 그림자(아이보리에 맞게 너무 진하지 않게) */
+      --soft-shadow: 0 14px 34px rgba(43,44,43,.10);
+    }
+
+    body{
+      margin:0;
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    .wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:14px;
+      padding:28px;
+      width:min(560px, 92vw);
+      position:relative;
+    }
+
+    /* 하트 HUD 중앙 */
+    .hud{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    /* ✅ 목숨 패널: 무광 차콜 톤과 어울리는 웜-아이보리 위의 차콜 글래스 느낌 */
+    .lives{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:14px;
+      background: var(--panel);
+      box-shadow:
+        inset 0 0 0 1px var(--panel-bd),
+        0 10px 24px rgba(43,44,43,.08);
+      min-height: 44px;
+      backdrop-filter: blur(6px);
+    }
+
+    .life{
+      font-size:20px;
+      line-height:1;
+      opacity: 1;
+      transition: opacity 140ms ease, transform 140ms ease;
+      filter: saturate(1.05);
+    }
+    .life.off{
+      opacity: .22;
+      transform: scale(.98);
+      filter: grayscale(1) saturate(.9);
+    }
+
+    .stage{
+      position:relative;
+      width: var(--disk-size);
+      height: var(--disk-size);
+      display:grid;
+      place-items:center;
+      margin-top: 2px;
+    }
+
+    /* ✅ 원판: 무광 블랙(차콜) */
+    .disk{
+      position:absolute;
+      inset:0;
+      border-radius:50%;
+      background: var(--ink-2);
+      box-shadow: none;
+      transform: rotate(0deg);
+      transform-origin:center;
+      will-change: transform;
+    }
+
+    .disk.spinning{
+      transition: transform var(--spin-ms) cubic-bezier(.12,.85,.15,1);
+    }
+
+    .orbit{
+      position:absolute;
+      inset:0;
+      border-radius:50%;
+      pointer-events:auto;
+    }
+
+    .dot-wrap{
+      position:absolute;
+      left:50%;
+      top:50%;
+      width:0;
+      height:0;
+      transform-origin: 0 0;
+      pointer-events:auto;
+    }
+
+    .dot{
+      width: var(--dot-size);
+      height: var(--dot-size);
+      border-radius:50%;
+      transform: translate(-50%, -50%);
+      overflow:hidden;
+      border:none;
+      background: transparent;
+      cursor:pointer;
+      user-select:none;
+      pointer-events:auto;
+    }
+
+    .dot:active{
+      transform: translate(-50%, -50%) scale(0.98);
+    }
+
+    .dot img{
+      width:100%;
+      height:100%;
+      display:block;
+      object-fit: contain;
+      border:none;
+      outline:none;
+      -webkit-user-drag:none;
+      pointer-events:none;
+    }
+
+    /* ✅ 중앙 로고: 아이보리 + 차콜 조합 */
+    .center{
+      position:absolute;
+      width: var(--center-size);
+      height: var(--center-size);
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      background: rgba(245,245,242,.55);
+      box-shadow: var(--soft-shadow), inset 0 0 0 1px rgba(43,44,43,.12);
+      z-index:5;
+      user-select:none;
+      pointer-events:none;
+      backdrop-filter: blur(8px);
+    }
+
+    .logo-placeholder{
+      width:72%;
+      height:72%;
+      border-radius:50%;
+      display:grid;
+      place-items:center;
+      background: rgba(43,44,43,.08);
+      color: rgba(255, 255, 255, 0.85);
+      font-weight:400;
+      font-size: 25px;
+      letter-spacing:.2px;
+      box-shadow: inset 0 0 0 1px rgba(43,44,43,.14);
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:center;
+      margin-top: 6px;
+    }
+
+    /* ✅ 버튼: 무광 차콜 톤(아이보리에서 고급스럽게) */
+    button{
+      appearance:none;
+      border:none;
+      cursor:pointer;
+      font-size: 20px;
+      padding:16px 20px;
+      border-radius:12px;
+      background: var(--btn-bg);
+      color: var(--btn-text);
+      font-weight:1000;
+      box-shadow:
+        inset 0 0 0 1px var(--btn-bd),
+        0 10px 18px rgba(43,44,43,.08);
+      transition: transform .12s ease, background .12s ease, opacity .12s ease, filter .12s ease;
+    }
+    button:hover{ background: var(--btn-bg-hover); }
+    button:active{
+      transform: translateY(1px) scale(.99);
+      background: var(--btn-bg-active);
+    }
+    button:disabled{
+      cursor:not-allowed;
+      opacity:.35;
+      filter: grayscale(1);
+      background: rgba(43,44,43,.06);
+      box-shadow: inset 0 0 0 1px rgba(43,44,43,.10);
+    }
+
+    /* 성공/실패 시: 배경 잠금, 오버레이는 선명 */
+    .lock-ui .stage,
+    .lock-ui .controls button:not(#resetBtn){
+      opacity:.35;
+      filter: grayscale(1);
+      pointer-events:none;
+    }
+    .lock-ui #resetBtn{
+      opacity:1;
+      filter:none;
+      pointer-events:auto;
+    }
+
+    /* ✅ 리셋 버튼은 살짝 더 진하게 */
+    #resetBtn{
+      display:none;
+      background: var(--btn-reset-bg);
+      box-shadow:
+        inset 0 0 0 1px rgba(43,44,43,.20),
+        0 12px 22px rgba(43,44,43,.10);
+    }
+    #resetBtn:hover{ background: var(--btn-reset-hover); }
+
+    /* 오버레이 */
+    .overlay{
+      position:absolute;
+      inset:0;
+      display:none;
+      place-items:center;
+      pointer-events:none;
+      z-index:60;
+    }
+    .overlay.show{ display:grid; }
+
+    .overlay-card{
+      text-align:center;
+      padding:18px 20px;
+      border-radius:16px;
+
+      /* ✅ 아이보리 위에서 “무광 블랙” 오버레이 */
+      background: rgba(43,44,43,.86);
+      box-shadow: 0 18px 50px rgba(43,44,43,.25), inset 0 0 0 1px rgba(255,255,255,.10);
+      backdrop-filter: blur(8px);
+      min-width: min(420px, 86vw);
+      transform: translateY(6px);
+      opacity: 0;
+      animation: popIn 220ms ease-out forwards;
+    }
+    @keyframes popIn{ to { transform: translateY(0); opacity: 1; } }
+
+    .overlay-title{
+      font-size:30px;
+      font-weight:1000;
+      letter-spacing:.2px;
+      color:#F5F5F2;
+      text-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    .overlay-sub{
+      margin-top:8px;
+      font-size:14px;
+      color: rgba(245,245,242,.92);
+      font-weight:900;
+    }
+
+    /* 폭죽 레이어 */
+    .confetti{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+      z-index:55;
+      overflow:hidden;
+      display:none;
+    }
+    .confetti.show{ display:block; }
+
+    .confetti-piece{
+      position:absolute;
+      width:10px;
+      height:18px;
+      border-radius:3px;
+      opacity:0;
+      transform: translate(-50%, -50%) rotate(0deg);
+      animation: burst var(--t) ease-out forwards;
+      filter: drop-shadow(0 8px 10px rgba(0,0,0,.18));
+    }
+
+    @keyframes burst{
+      0%{ opacity:1; transform: translate(var(--x0), var(--y0)) rotate(var(--r0)); }
+      100%{ opacity:0; transform: translate(var(--x1), var(--y1)) rotate(var(--r1)); }
+    }
+
+    @media (max-width: 520px){
+      :root{
+        --disk-size: 320px;
+        --center-size: 96px;
+        --dot-size: 52px;
+        --orbit-radius: 120px;
+      }
+      .life{ font-size:18px; }
+      .overlay-title{ font-size:26px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap" id="wrap">
+    <div class="hud">
+      <div class="lives" id="lives" aria-label="lives">
+        <span class="life" data-life="1">❤️</span>
+        <span class="life" data-life="2">❤️</span>
+        <span class="life" data-life="3">❤️</span>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="disk" id="disk">
+        <div class="orbit" id="orbit"></div>
+      </div>
+
+      <div class="center">
+        <div class="logo-placeholder"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="spinBtn" disabled>회전</button>
+      <button id="resetBtn">초기화</button>
+    </div>
+
+    <div class="confetti" id="confetti"></div>
+
+    <div class="overlay" id="overlay">
+      <div class="overlay-card">
+        <div class="overlay-title" id="overlayTitle">성공</div>
+        <div class="overlay-sub" id="overlaySub">남은 목숨 : 3개</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const wrap = document.getElementById('wrap');
+    const disk = document.getElementById('disk');
+    const orbit = document.getElementById('orbit');
+
+    const livesEl = document.getElementById('lives');
+
+    const spinBtn = document.getElementById('spinBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const confetti = document.getElementById('confetti');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlayTitle');
+    const overlaySub = document.getElementById('overlaySub');
+
+    const N = 9;
+
+    const IMG_NONE   = "images/bun_none.png";
+    const IMG_ON     = "images/bun.png";
+    const IMG_SELECT = "images/bunbun.png";
+
+    // ===== 게임 상태 =====
+    let isClosed = false;
+    let selectedIndex = null;
+    let lives = 3;
+    let phase = "SETUP";           // SETUP, SPINNING, CLOSED_SELECT, END_SUCCESS, END_FAIL
+    let baseRotationDeg = 0;
+
+    function getCssVarNumber(name, fallback) {
+      const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      const n = parseFloat(v);
+      return Number.isFinite(n) ? n : fallback;
+    }
+
+    function updateLivesUI() {
+      const hearts = livesEl.querySelectorAll('.life');
+      hearts.forEach((h, idx) => {
+        const lifeNum = idx + 1;
+        h.classList.toggle('off', lifeNum > lives);
+      });
+    }
+
+    function setDotImage(index, src) {
+      const dot = orbit.querySelector(`.dot[data-index="${index}"]`);
+      if (!dot) return;
+      const img = dot.querySelector('img');
+      if (img) img.src = src;
+    }
+
+    function renderDots() {
+      orbit.innerHTML = '';
+      const radius = getCssVarNumber('--orbit-radius', 140);
+
+      for (let i = 0; i < N; i++) {
+        const angle = (360 / N) * i;
+
+        const wrap = document.createElement('div');
+        wrap.className = 'dot-wrap';
+        wrap.style.transform = `rotate(${angle}deg) translate(${radius}px)`;
+
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.dataset.index = String(i);
+
+        const img = document.createElement('img');
+        img.alt = `dot-${i+1}`;
+
+        if (isClosed) img.src = IMG_ON;
+        else img.src = (selectedIndex === i) ? IMG_SELECT : IMG_NONE;
+
+        dot.appendChild(img);
+        wrap.appendChild(dot);
+        orbit.appendChild(wrap);
+      }
+    }
+
+    function syncAllDots() {
+      for (let i = 0; i < N; i++) {
+        if (isClosed) setDotImage(i, IMG_ON);
+        else setDotImage(i, (selectedIndex === i) ? IMG_SELECT : IMG_NONE);
+      }
+    }
+
+    function setSpinEnabled(enabled) {
+      spinBtn.disabled = !enabled;
+    }
+
+    function showResetOnly(show) {
+      if (show) {
+        resetBtn.style.display = "inline-block";
+        wrap.classList.add('lock-ui');
+      } else {
+        resetBtn.style.display = "none";
+        wrap.classList.remove('lock-ui');
+      }
+    }
+
+    function showOverlay(title, sub) {
+      overlayTitle.textContent = title;
+      overlaySub.textContent = sub;
+      overlay.classList.add('show');
+    }
+
+    function hideOverlay() {
+      overlay.classList.remove('show');
+    }
+
+    function fireConfettiAtDot(index, durationMs = 2000) {
+      confetti.innerHTML = '';
+      confetti.classList.add('show');
+
+      const dot = orbit.querySelector(`.dot[data-index="${index}"]`);
+      const wrapRect = wrap.getBoundingClientRect();
+
+      let cx = wrapRect.width / 2;
+      let cy = wrapRect.height / 2;
+
+      if (dot) {
+        const r = dot.getBoundingClientRect();
+        cx = (r.left + r.right) / 2 - wrapRect.left;
+        cy = (r.top + r.bottom) / 2 - wrapRect.top;
+      }
+
+      const colors = ["#ff4d4d","#ffd24d","#4dff88","#4dd7ff","#a64dff","#ff4dd2","#111111"];
+      const pieces = 52;
+
+      for (let i = 0; i < pieces; i++) {
+        const p = document.createElement('div');
+        p.className = 'confetti-piece';
+        p.style.left = cx + 'px';
+        p.style.top  = cy + 'px';
+
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const w = 6 + Math.random() * 9;
+        const h = 10 + Math.random() * 16;
+        p.style.background = color;
+        p.style.width = w + 'px';
+        p.style.height = h + 'px';
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist  = 70 + Math.random() * 110;
+
+        const x1 = Math.cos(angle) * dist;
+        const y1 = Math.sin(angle) * dist + (70 + Math.random() * 140);
+
+        const r0 = (Math.random() * 180 - 90) + "deg";
+        const r1 = (Math.random() * 720 - 360) + "deg";
+
+        p.style.setProperty('--x0', '0px');
+        p.style.setProperty('--y0', '0px');
+        p.style.setProperty('--x1', `${x1}px`);
+        p.style.setProperty('--y1', `${y1}px`);
+        p.style.setProperty('--r0', r0);
+        p.style.setProperty('--r1', r1);
+
+        const t = 1500 + Math.random() * 600;
+        p.style.setProperty('--t', `${t}ms`);
+
+        confetti.appendChild(p);
+      }
+
+      window.setTimeout(() => {
+        confetti.classList.remove('show');
+        confetti.innerHTML = '';
+      }, durationMs);
+    }
+
+    function resetGame() {
+      isClosed = false;
+      selectedIndex = null;
+      lives = 3;
+      phase = "SETUP";
+      baseRotationDeg = 0;
+
+      disk.classList.remove('spinning');
+      disk.style.removeProperty('--spin-ms');
+      disk.style.transform = `rotate(0deg)`;
+
+      renderDots();
+      updateLivesUI();
+      setSpinEnabled(false);
+      showResetOnly(false);
+      hideOverlay();
+
+      confetti.classList.remove('show');
+      confetti.innerHTML = '';
+    }
+
+    function startSpin() {
+      if (phase !== "SETUP") return;
+      if (selectedIndex === null) return;
+
+      isClosed = true;
+      syncAllDots();
+
+      phase = "SPINNING";
+      setSpinEnabled(false);
+
+      // 회전 시간: 2~5초
+      const ms = Math.floor(2000 + Math.random() * 2001);
+
+      // ✅ 느리게(0.3~0.9바퀴 정도)
+      const deltaDeg = 140 + Math.random() * 210; // 110~320deg
+
+      baseRotationDeg += deltaDeg;
+
+      disk.classList.add('spinning');
+      disk.style.setProperty('--spin-ms', `${ms}ms`);
+      void disk.offsetWidth;
+      disk.style.transform = `rotate(${baseRotationDeg}deg)`;
+
+      window.setTimeout(() => {
+        disk.classList.remove('spinning');
+        setSpinEnabled(false);
+        phase = "CLOSED_SELECT";
+      }, ms);
+    }
+
+    function endSuccess() {
+      phase = "END_SUCCESS";
+
+      isClosed = false;
+      syncAllDots();
+
+      fireConfettiAtDot(selectedIndex, 2000);
+
+      window.setTimeout(() => {
+        showOverlay("성공", `남은 목숨 : ${lives}개`);
+        showResetOnly(true);
+      }, 850);
+    }
+
+    function endFail() {
+      phase = "END_FAIL";
+      showOverlay("실패", "목숨이 모두 소진되었습니다.");
+      showResetOnly(true);
+    }
+
+    function handleGuessClick(idx) {
+      if (idx === selectedIndex) {
+        endSuccess();
+        return;
+      }
+
+      setDotImage(idx, IMG_NONE);
+
+      lives = Math.max(0, lives - 1);
+      updateLivesUI();
+
+      if (lives <= 0) endFail();
+    }
+
+    // 이벤트
+    spinBtn.addEventListener('click', startSpin);
+    resetBtn.addEventListener('click', resetGame);
+
+    orbit.addEventListener('click', (e) => {
+      const dot = e.target.closest('.dot');
+      if (!dot) return;
+
+      const idx = Number(dot.dataset.index);
+      if (!Number.isFinite(idx)) return;
+
+      if (phase === "END_SUCCESS" || phase === "END_FAIL") return;
+      if (phase === "SPINNING") return;
+
+      if (isClosed) {
+        if (phase === "CLOSED_SELECT") handleGuessClick(idx);
+        return;
+      }
+
+      if (selectedIndex !== null && selectedIndex !== idx) {
+        setDotImage(selectedIndex, IMG_NONE);
+      }
+      selectedIndex = idx;
+      setDotImage(selectedIndex, IMG_SELECT);
+
+      setSpinEnabled(true);
+      phase = "SETUP";
+    });
+
+    window.addEventListener('resize', () => {
+      renderDots();
+      syncAllDots();
+    });
+
+    resetGame();
+  </script>
+</body>
+</html>
