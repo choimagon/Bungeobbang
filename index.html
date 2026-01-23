@@ -14,11 +14,9 @@
       --orbit-radius: 140px;
 
       /* ===== 컬러 테마 (아이보리 + 무광 차콜) ===== */
-      --bg: #F5F5F2;              /* 아이보리 배경 */
-      --ink: #2B2C2B;             /* 무광 차콜(검정 느낌) */
-      --ink-2: #1A1A1A;           /* 더 진한 블랙 */
-      --panel: rgba(43,44,43,.06);/* HUD/패널 배경 */
-      --panel-bd: rgba(43,44,43,.12);
+      --bg: #F5F5F2;
+      --ink: #2B2C2B;
+      --ink-2: #1A1A1A;
 
       /* 버튼 */
       --btn-bg: rgba(43,44,43,.10);
@@ -27,17 +25,14 @@
       --btn-bd: rgba(43,44,43,.18);
       --btn-text: #2B2C2B;
 
-      /* 리셋 버튼(조금 더 강조) */
+      /* 리셋 버튼 */
       --btn-reset-bg: rgba(43,44,43,.16);
       --btn-reset-hover: rgba(43,44,43,.20);
 
-      /* 부드러운 그림자(아이보리에 맞게 너무 진하지 않게) */
+      /* 그림자 */
       --soft-shadow: 0 14px 34px rgba(43,44,43,.10);
 
-      /* ✅ 번호 배지 */
-      --badge-bg: rgba(245,245,242,.92);
-      --badge-bd: rgba(43,44,43,.20);
-      --badge-ink: rgba(43,44,43,.95);
+      /* 번호 배지 */
       --badge-size: 36px;
       --badge-font: 20px;
     }
@@ -62,41 +57,6 @@
       position:relative;
     }
 
-    /* 하트 HUD 중앙 */
-    .hud{
-      width:100%;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .lives{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      padding:10px 14px;
-      border-radius:14px;
-      background: var(--panel);
-      box-shadow:
-        inset 0 0 0 1px var(--panel-bd),
-        0 10px 24px rgba(43,44,43,.08);
-      min-height: 44px;
-      backdrop-filter: blur(6px);
-    }
-
-    .life{
-      font-size:20px;
-      line-height:1;
-      opacity: 1;
-      transition: opacity 140ms ease, transform 140ms ease;
-      filter: saturate(1.05);
-    }
-    .life.off{
-      opacity: .22;
-      transform: scale(.98);
-      filter: grayscale(1) saturate(.9);
-    }
-
     .stage{
       position:relative;
       width: var(--disk-size);
@@ -106,7 +66,6 @@
       margin-top: 2px;
     }
 
-    /* ✅ 원판: 무광 블랙(차콜) */
     .disk{
       position:absolute;
       inset:0;
@@ -118,8 +77,9 @@
       will-change: transform;
     }
 
+    /* ✅ 느리게 시작/멈춤 제거: linear로 일정 속도 */
     .disk.spinning{
-      transition: transform var(--spin-ms) cubic-bezier(.12,.85,.15,1);
+      transition: transform var(--spin-ms) cubic-bezier(0.10, 0.90, 0.20, 1);
     }
 
     .orbit{
@@ -150,8 +110,6 @@
       cursor:pointer;
       user-select:none;
       pointer-events:auto;
-
-      /* ✅ 배지 포지셔닝을 위해 */
       position: relative;
     }
 
@@ -170,13 +128,11 @@
       pointer-events:none;
     }
 
-    /* ✅ 번호 배지 */
+    /* ✅ 번호 배지: 기본 숨김 */
     .badge{
       position:absolute;
       top:50%;
       left:50%;
-      transform: translate(-50%, -50%);
-
       width: var(--badge-size);
       height: var(--badge-size);
       border-radius: 999px;
@@ -200,19 +156,17 @@
 
       text-shadow: 0 2px 6px rgba(0,0,0,.55);
 
-      /* ✅ 기본: 번호 숨김 */
       opacity: 0;
-      transform: translate(-50%, -50%) scale(0.96);
-      transition: opacity 160ms ease, transform 160ms ease;
+      transform: translate(-50%, -50%) scale(0.98);
+      transition: opacity 140ms ease, transform 140ms ease;
     }
 
-    /* ✅ 회전 후(맞추기 단계)부터 번호 보이기 */
-    .show-badges .badge{
+    /* ✅ 회전 후(맞추기 단계)부터 보이게 */
+    body.show-badges .badge{
       opacity: 1;
       transform: translate(-50%, -50%) scale(1);
     }
 
-    /* ✅ 중앙 로고 */
     .center{
       position:absolute;
       width: var(--center-size);
@@ -279,8 +233,52 @@
       box-shadow: inset 0 0 0 1px rgba(43,44,43,.10);
     }
 
+    /* ✅ 레벨 선택 UI */
+    .level-row{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 2px;
+    }
+    .level-label{
+      font-weight: 900;
+      opacity: .9;
+      letter-spacing: .2px;
+    }
+    .level-btn{
+      padding:12px 14px;
+      border-radius:12px;
+      font-size:18px;
+      font-weight:1000;
+      background: rgba(43,44,43,.08);
+      box-shadow: inset 0 0 0 1px rgba(43,44,43,.14);
+      transition: transform .12s ease, background .12s ease, opacity .12s ease, filter .12s ease;
+    }
+    .level-btn:hover{ background: rgba(43,44,43,.12); }
+    .level-btn:active{ transform: translateY(1px) scale(.99); }
+    /* .level-btn.active{
+      background: rgba(43,44,43,.18);
+      box-shadow: inset 0 0 0 1px rgba(43,44,43,.22), 0 10px 18px rgba(43,44,43,.08);
+    } */
+        /* ✅ 선택(active)되면 파란색으로 꽉 채움 */
+    .level-btn.active{
+      background: rgba(36, 106, 191, 0.22);
+      color: black;
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.22),
+        0 10px 18px rgba(43,44,43,.10),
+        0 0 0 6px rgba(255,255,255,.22);
+      filter: saturate(1.06);
+      transform: translateY(-1px);
+    }
+
+    /* 성공 후 UI 잠금: stage + 회전 버튼 + 레벨버튼 잠그고 reset만 살림 */
     .lock-ui .stage,
-    .lock-ui .controls button:not(#resetBtn){
+    .lock-ui .controls button:not(#resetBtn),
+    .lock-ui .level-row{
       opacity:.35;
       filter: grayscale(1);
       pointer-events:none;
@@ -331,12 +329,6 @@
       color:#F5F5F2;
       text-shadow: 0 10px 30px rgba(0,0,0,.35);
     }
-    .overlay-sub{
-      margin-top:8px;
-      font-size:14px;
-      color: rgba(245,245,242,.92);
-      font-weight:900;
-    }
 
     .confetti{
       position:absolute;
@@ -370,26 +362,17 @@
         --center-size: 96px;
         --dot-size: 52px;
         --orbit-radius: 120px;
-
-        /* ✅ 모바일에서 배지 크기/글씨만 같이 줄이기 */
         --badge-size: 22px;
         --badge-font: 12px;
       }
-
-      .life{ font-size:18px; }
+      button{ font-size:18px; padding:14px 16px; }
+      .level-btn{ font-size:16px; padding:10px 12px; }
       .overlay-title{ font-size:26px; }
     }
   </style>
 </head>
 <body>
   <div class="wrap" id="wrap">
-    <div class="hud">
-      <div class="lives" id="lives" aria-label="lives">
-        <span class="life" data-life="1">❤️</span>
-        <span class="life" data-life="2">❤️</span>
-        <span class="life" data-life="3">❤️</span>
-      </div>
-    </div>
 
     <div class="stage">
       <div class="disk" id="disk">
@@ -399,6 +382,14 @@
       <div class="center">
         <div class="logo-placeholder"></div>
       </div>
+    </div>
+
+    <!-- ✅ 레벨 선택 (회전 전에 선택) -->
+    <div class="level-row" id="levelRow" aria-label="level">
+      <span class="level-label">레벨</span>
+      <button class="level-btn" type="button" data-level="1">1</button>
+      <button class="level-btn" type="button" data-level="2">2</button>
+      <button class="level-btn" type="button" data-level="3">3</button>
     </div>
 
     <div class="controls">
@@ -411,7 +402,6 @@
     <div class="overlay" id="overlay">
       <div class="overlay-card">
         <div class="overlay-title" id="overlayTitle">성공</div>
-        <div class="overlay-sub" id="overlaySub">남은 목숨 : 3개</div>
       </div>
     </div>
   </div>
@@ -421,7 +411,8 @@
     const disk = document.getElementById('disk');
     const orbit = document.getElementById('orbit');
 
-    const livesEl = document.getElementById('lives');
+    const levelRow = document.getElementById('levelRow');
+    const levelBtns = Array.from(levelRow.querySelectorAll('.level-btn'));
 
     const spinBtn = document.getElementById('spinBtn');
     const resetBtn = document.getElementById('resetBtn');
@@ -429,7 +420,6 @@
     const confetti = document.getElementById('confetti');
     const overlay = document.getElementById('overlay');
     const overlayTitle = document.getElementById('overlayTitle');
-    const overlaySub = document.getElementById('overlaySub');
 
     const N = 9;
 
@@ -440,22 +430,24 @@
     // ===== 게임 상태 =====
     let isClosed = false;
     let selectedIndex = null;
-    let lives = 3;
-    let phase = "SETUP";           // SETUP, SPINNING, CLOSED_SELECT, END_SUCCESS, END_FAIL
+    let phase = "SETUP";           // SETUP, SPINNING, CLOSED_SELECT, END_SUCCESS
     let baseRotationDeg = 0;
+
+    // ✅ 레벨(1~3) 선택값
+    let level = 3;                 // 기본값
+    function setLevel(lv){
+      level = Math.max(1, Math.min(3, Number(lv) || 3));
+      levelBtns.forEach(b => b.classList.toggle('active', Number(b.dataset.level) === level));
+    }
+
+    function setBadgesVisible(visible){
+      document.body.classList.toggle('show-badges', !!visible);
+    }
 
     function getCssVarNumber(name, fallback) {
       const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
       const n = parseFloat(v);
       return Number.isFinite(n) ? n : fallback;
-    }
-
-    function updateLivesUI() {
-      const hearts = livesEl.querySelectorAll('.life');
-      hearts.forEach((h, idx) => {
-        const lifeNum = idx + 1;
-        h.classList.toggle('off', lifeNum > lives);
-      });
     }
 
     function setDotImage(index, src) {
@@ -486,7 +478,6 @@
         if (isClosed) img.src = IMG_ON;
         else img.src = (selectedIndex === i) ? IMG_SELECT : IMG_NONE;
 
-        // ✅ 번호 배지(1~9) 추가
         const badge = document.createElement('div');
         badge.className = 'badge';
         badge.textContent = String(i + 1);
@@ -497,9 +488,6 @@
         wrapEl.appendChild(dot);
         orbit.appendChild(wrapEl);
       }
-
-      // 현재 phase에 맞게 번호 표시 동기화
-      updateBadgesVisibility();
     }
 
     function syncAllDots() {
@@ -507,7 +495,6 @@
         if (isClosed) setDotImage(i, IMG_ON);
         else setDotImage(i, (selectedIndex === i) ? IMG_SELECT : IMG_NONE);
       }
-      // 번호는 DOM에 고정이라 따로 동기화 필요 없음
     }
 
     function setSpinEnabled(enabled) {
@@ -524,20 +511,13 @@
       }
     }
 
-    function showOverlay(title, sub) {
+    function showOverlay(title = "성공") {
       overlayTitle.textContent = title;
-      overlaySub.textContent = sub;
       overlay.classList.add('show');
     }
 
     function hideOverlay() {
       overlay.classList.remove('show');
-    }
-
-    // ✅ phase에 따라 번호 배지 숨김/표시
-    function updateBadgesVisibility() {
-      const show = (phase === "CLOSED_SELECT" || phase === "END_SUCCESS" || phase === "END_FAIL");
-      wrap.classList.toggle("show-badges", show);
     }
 
     function fireConfettiAtDot(index, durationMs = 2000) {
@@ -603,7 +583,6 @@
     function resetGame() {
       isClosed = false;
       selectedIndex = null;
-      lives = 3;
       phase = "SETUP";
       baseRotationDeg = 0;
 
@@ -612,7 +591,7 @@
       disk.style.transform = `rotate(0deg)`;
 
       renderDots();
-      updateLivesUI();
+      syncAllDots();
       setSpinEnabled(false);
       showResetOnly(false);
       hideOverlay();
@@ -620,31 +599,33 @@
       confetti.classList.remove('show');
       confetti.innerHTML = '';
 
-      // ✅ 초기에는 번호 숨김
-      updateBadgesVisibility();
+      setBadgesVisible(false);
+      setLevel(level); // UI 갱신
     }
 
     function startSpin() {
       if (phase !== "SETUP") return;
       if (selectedIndex === null) return;
 
-      // 1) 먼저 '닫힘' 상태로 확실히 변경
+      // 회전 전: 번호 숨김
+      setBadgesVisible(false);
+
+      // 1) 닫힘
       isClosed = true;
       syncAllDots();
 
-      // 2) 1초 동안 완전히 잠그기 (클릭/선택 방지)
+      // 2) 잠금
       phase = "SPINNING";
       setSpinEnabled(false);
-      // ✅ 회전 전/중에는 번호 숨김 유지
-      updateBadgesVisibility();
 
-      // 3) 닫힌 상태로 1초 보여준 뒤 회전 시작
+      // 3) 닫힌 상태로 1초 보여준 뒤 회전
       window.setTimeout(() => {
-        // 회전 시간: 2~5초
-        const ms = Math.floor(2000 + Math.random() * 2001);
+        // ✅ 레벨 기반 속도(너 코드 방식 유지)
+        const dum = Math.random();
+        const level_speed = 2600 * (4 - level);   
+        const ms = Math.floor(4000 + level_speed);
+        const deltaDeg = 350 + dum * 130 + (Math.random() + 0.12) * 70;
 
-        // ✅ 느리게(0.3~0.9바퀴 정도)
-        const deltaDeg = 190 + Math.random() * 210;
         baseRotationDeg += deltaDeg;
 
         disk.classList.add('spinning');
@@ -655,17 +636,16 @@
         window.setTimeout(() => {
           disk.classList.remove('spinning');
           setSpinEnabled(false);
-          phase = "CLOSED_SELECT"; // 회전 끝나면 선택(맞추기) 단계
 
-          // ✅ 회전 후에 번호 보이게
-          updateBadgesVisibility();
+          // 회전 끝: 번호 보이기
+          phase = "CLOSED_SELECT";
+          setBadgesVisible(true);
         }, ms);
       }, 1000);
     }
 
     function endSuccess() {
       phase = "END_SUCCESS";
-      updateBadgesVisibility(); // ✅ 엔딩에서도 번호 유지
 
       isClosed = false;
       syncAllDots();
@@ -673,16 +653,9 @@
       fireConfettiAtDot(selectedIndex, 2000);
 
       window.setTimeout(() => {
-        showOverlay("성공", `남은 목숨 : ${lives}개`);
+        showOverlay("성공");
         showResetOnly(true);
       }, 850);
-    }
-
-    function endFail() {
-      phase = "END_FAIL";
-      updateBadgesVisibility(); // ✅ 엔딩에서도 번호 유지
-      showOverlay("실패", "목숨이 모두 소진되었습니다.");
-      showResetOnly(true);
     }
 
     function handleGuessClick(idx) {
@@ -690,16 +663,20 @@
         endSuccess();
         return;
       }
-
       setDotImage(idx, IMG_NONE);
-
-      lives = Math.max(0, lives - 1);
-      updateLivesUI();
-
-      if (lives <= 0) endFail();
     }
 
-    // 이벤트
+    // ===== 이벤트 =====
+    levelRow.addEventListener('click', (e) => {
+      const btn = e.target.closest('.level-btn');
+      if (!btn) return;
+
+      // ✅ 회전/맞추기/성공 상태에서는 레벨 변경 막기
+      if (phase !== "SETUP") return;
+
+      setLevel(btn.dataset.level);
+    });
+
     spinBtn.addEventListener('click', startSpin);
     resetBtn.addEventListener('click', resetGame);
 
@@ -710,7 +687,7 @@
       const idx = Number(dot.dataset.index);
       if (!Number.isFinite(idx)) return;
 
-      if (phase === "END_SUCCESS" || phase === "END_FAIL") return;
+      if (phase === "END_SUCCESS") return;
       if (phase === "SPINNING") return;
 
       if (isClosed) {
@@ -718,6 +695,7 @@
         return;
       }
 
+      // 열림 상태: 정답 위치 선택
       if (selectedIndex !== null && selectedIndex !== idx) {
         setDotImage(selectedIndex, IMG_NONE);
       }
@@ -726,7 +704,6 @@
 
       setSpinEnabled(true);
       phase = "SETUP";
-      updateBadgesVisibility(); // ✅ 선택 단계에서는 번호 숨김 유지
     });
 
     window.addEventListener('resize', () => {
@@ -734,11 +711,12 @@
       syncAllDots();
     });
 
-    window.addEventListener('pageshow', (e) => {
-      // e.persisted === true 이면 BFCache(뒤로가기 캐시)로 복원된 경우
+    window.addEventListener('pageshow', () => {
       resetGame();
     });
 
+    // 초기
+    setLevel(3);
     resetGame();
   </script>
 </body>
